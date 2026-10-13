@@ -21,3 +21,6 @@ Thumbs.db
 
 # TypeScript cache
 *.tsbuildinfo
+
+# Local Interview & Presentation Prep
+INTERVIEW_GUIDE.md
