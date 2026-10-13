@@ -118,13 +118,34 @@ npm run start:dev
 
 ---
 
-## 🐳 Docker & Cloud Deployment
+## 🐳 Deployment Guide
 
-### Docker Build & Run
+### Option 1: Vercel + Neon (100% Free, NO Credit Card Required) ⭐
+
+1. **Free PostgreSQL Database (Neon.tech):**
+   - Go to [neon.tech](https://neon.tech) and sign up with GitHub (no credit card needed).
+   - Create a project `taskflow` and copy the connection string (`DATABASE_URL`).
+   - Run migrations to your cloud database locally once:
+     ```bash
+     DATABASE_URL="your-neon-connection-string" npx prisma db push
+     DATABASE_URL="your-neon-connection-string" npx prisma db seed
+     ```
+
+2. **Deploy to Vercel:**
+   - Go to [vercel.com](https://vercel.com) and sign up with GitHub (no credit card needed).
+   - Click **Add New... -> Project** and import `MahmoudAbdalrhmanMohamed/taskflow-nestjs-api`.
+   - Under **Environment Variables**, add:
+     - `DATABASE_URL`: `your-neon-connection-string`
+     - `JWT_SECRET`: `any-secure-random-string-at-least-32-chars`
+     - `JWT_EXPIRES_IN`: `7d`
+     - `NODE_ENV`: `production`
+   - Click **Deploy**. Vercel will build and serve your API with an instant HTTPS URL!
+
+### Option 2: Docker Container (Any VPS / Local)
 ```bash
 docker build -t taskflow-nestjs-api .
 docker run -p 3000:3000 --env-file .env taskflow-nestjs-api
 ```
 
-### Render Deployment
-This repository includes a `render.yaml` blueprint. Simply link the repository on [Render](https://render.com) and deploy with one click.
+### Option 3: Render Deployment
+This repository also includes a `render.yaml` blueprint for [Render](https://render.com).
