@@ -7,6 +7,7 @@ import { ProjectsModule } from './modules/projects/projects.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { HealthModule } from './modules/health/health.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -22,5 +23,6 @@ import { HealthModule } from './modules/health/health.module';
     DashboardModule,
     HealthModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}
