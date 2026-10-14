@@ -18,4 +18,26 @@ export class AppController {
       timestamp: new Date().toISOString(),
     };
   }
+
+  @Public()
+  @Get('health/env')
+  @ApiOperation({ summary: 'Database environment verification' })
+  checkEnv() {
+    const dbUrl = process.env.DATABASE_URL;
+    let dbHost = 'NOT_SET';
+    if (dbUrl) {
+      try {
+        const parsed = new URL(dbUrl);
+        dbHost = parsed.host;
+      } catch {
+        dbHost = 'SET_BUT_UNPARSABLE';
+      }
+    }
+    return {
+      hasDatabaseUrl: Boolean(dbUrl),
+      dbHost,
+      nodeEnv: process.env.NODE_ENV || 'development',
+      hasJwtSecret: Boolean(process.env.JWT_SECRET),
+    };
+  }
 }
