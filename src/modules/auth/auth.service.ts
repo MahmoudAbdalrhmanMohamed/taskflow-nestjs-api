@@ -3,6 +3,7 @@ import {
   ConflictException,
   UnauthorizedException,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -13,15 +14,46 @@ import { AuthResponseDto, UserResponseDto } from './dto/auth-response.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
   ) {}
 
+  private async withRetry<T>(operation: () => Promise<T>, maxRetries = 2): Promise<T> {
+    let lastError: any;
+    for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+      try {
+        return await operation();
+      } catch (err: any) {
+        lastError = err;
+        const msg = String(err?.message || '');
+        const isConnTimeout =
+          msg.includes('connection pool') ||
+          msg.includes('Timed out fetching') ||
+          msg.includes('P1001') ||
+          msg.includes('P1002');
+
+        if (isConnTimeout && attempt <= maxRetries) {
+          this.logger.warn(
+            `Database connection busy or cold-starting. Retrying query (attempt ${attempt}/${maxRetries})...`,
+          );
+          await new Promise((r) => setTimeout(r, 1500));
+          continue;
+        }
+        throw err;
+      }
+    }
+    throw lastError;
+  }
+
   async register(dto: RegisterDto): Promise<AuthResponseDto> {
-    const existing = await this.prisma.user.findUnique({
-      where: { email: dto.email.toLowerCase() },
-    });
+    const existing = await this.withRetry(() =>
+      this.prisma.user.findUnique({
+        where: { email: dto.email.toLowerCase() },
+      }),
+    );
 
     if (existing) {
       throw new ConflictException('An account with this email already exists');
@@ -63,9 +95,11 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<AuthResponseDto> {
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email.toLowerCase() },
-    });
+    const user = await this.withRetry(() =>
+      this.prisma.user.findUnique({
+        where: { email: dto.email.toLowerCase() },
+      }),
+    );
 
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');

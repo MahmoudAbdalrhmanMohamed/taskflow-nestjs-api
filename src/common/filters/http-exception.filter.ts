@@ -38,7 +38,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
       message = resObj.message || message;
       error = resObj.error || error;
     } else if (exception instanceof Error) {
-      message = exception.message;
+      const rawMsg = exception.message;
+      if (
+        rawMsg.includes('Timed out fetching') ||
+        rawMsg.includes('connection pool') ||
+        rawMsg.includes('P1001') ||
+        rawMsg.includes('P1002')
+      ) {
+        message = 'Database is warming up from sleep. Please click Sign In again in a moment.';
+      } else {
+        message = exception.message;
+      }
     }
 
     this.logger.error(
