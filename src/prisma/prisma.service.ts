@@ -7,17 +7,23 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private readonly logger = new Logger(PrismaService.name);
 
   constructor(configService: ConfigService) {
-    const databaseUrl =
+    const defaultNeonUrl =
+      'postgresql://neondb_owner:npg_BHQsvqgr9m4J@ep-tiny-hill-b46ck3o1-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require&connect_timeout=45&pool_timeout=45';
+
+    const envUrl =
       configService.get<string>('DATABASE_URL') || process.env.DATABASE_URL;
 
+    const databaseUrl =
+      envUrl && envUrl.trim().length > 0 && !envUrl.includes('localhost:5432')
+        ? envUrl
+        : defaultNeonUrl;
+
     super({
-      datasources: databaseUrl
-        ? {
-            db: {
-              url: databaseUrl,
-            },
-          }
-        : undefined,
+      datasources: {
+        db: {
+          url: databaseUrl,
+        },
+      },
     });
   }
 
